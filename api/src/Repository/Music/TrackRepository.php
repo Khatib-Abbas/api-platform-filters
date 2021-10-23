@@ -2,7 +2,7 @@
 
 namespace App\Repository\Music;
 
-use App\ApiPlatform\SearchStringFilter;
+use App\ApiPlatform\QueryBuildFilter\QueryBuilderStringFilter\QueryBuilderStringFilter;
 use App\ApiPlatform\TrackSearchFilter;
 use App\DataProvider\Music\Pagination\TrackDataPaginator;
 use App\Entity\Music\Track;
@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Exception\BadRequestException;
  */
 class TrackRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry,private QueryBuilderStringFilter $queryBuilderStringFilter)
     {
         parent::__construct($registry, Track::class);
     }
@@ -67,85 +67,14 @@ class TrackRepository extends ServiceEntityRepository
             //->orderBy('p.publishedAt', 'DESC')
             //->setParameter('now', new \DateTime())
         ;
+        $qbAlias=$qb->getRootAliases()[0];
 
-        $totalItems = $this->createQueryBuilder('p')
-            ->select('count(p.id)')
+        $totalItems = $this->createQueryBuilder($qbAlias)
+            ->select("count($qbAlias.id)")
         ;
-        $search = $context[SearchStringFilter::SEARCH_STRING_FILTER_CONTEXT]??null;
-        if($search){
-            $queryString = "";
-            $cpt=0;
-            foreach ($search as $property) {
-                $param = $property["param"]["attribute"];
-                $values =$property["param"]["value"];
-                $queryParam =$property["queryParam"];
-                if($param && $values && in_array($queryParam,["start","partial","exact","end","Le","_uy","%are_","_are%"],true) ){
-                    if(is_array($values)){
-                        foreach ($values as $id=>$value) {
-                           if($cpt===0){
-                               $queryString .= "p.$param LIKE :a$id";
 
-                           }else{
-                               $queryString .= " OR p.$param LIKE :a$id";
-                           }
-                           switch ($queryParam){
-                               case "start":
-                                   #Begins with Kim
-                                   $qb->setParameter("a$id","$value%");
-                                   $totalItems->setParameter("a$id","$value%");
-                                   break;
-                               case "partial":
-                                   #Contains ch
-                                   $qb->setParameter("a$id","%$value%");
-                                   $totalItems->setParameter("a$id","%$value%");
-                                   break;
-                               case "exact":
-                                   #Contains ch
-                                   $qb->setParameter("a$id","$value");
-                                   $totalItems->setParameter("a$id","$value");
-                                   break;
-                               case "end":
-                                   #Ends with er
-                                   $qb->setParameter("a$id","%$value");
-                                   $totalItems->setParameter("a$id","%$value");
-                                   break;
-                               case "Le":
-                                   #"Begins with Le and is followed by at most one character e.g., Les, Len…
-                                   $qb->setParameter("a$id",$value."_");
-                                   $totalItems->setParameter("a$id",$value."_");
-                                   break;
-                               case "_uy":
-                                   #Ends with uy and is preceded by at most one character e.g., guy
-                                   $qb->setParameter("a$id","_".$value);
-                                   $totalItems->setParameter("a$id","_".$value);
-                                   break;
-                               case "%are_":
-                                   #Contains are, begins with any number of characters and ends with at most one character
-                                   $qb->setParameter("a$id","%".$value."_");
-                                   $totalItems->setParameter("a$id","%".$value."_");
-                                   break;
-                               case "_are%":
-                                   #Contains are, begins with at most one character and ends with any number of characters
-                                   $qb->setParameter("a$id","_".$value."%");
-                                   $totalItems->setParameter("a$id","_".$value."%");
-                                   break;
-                           }
-                           $cpt++;
-                       }
+        $this->queryBuilderStringFilter->getQueryFilter($qb,$qbAlias,$totalItems,$context);
 
-                   }
-                   else{
-                       $qb->andWhere("p.$param = :$param")->setParameter($param,$values);
-                       $totalItems->andWhere("p.$param = :$param")->setParameter($param,$values);
-                   }
-
-                }
-            }
-            if($queryString){
-                $qb->andWhere($queryString);
-                $totalItems->andWhere($queryString);
-            }
-        }
 
         if($createdAt_search){
             $date = \DateTimeImmutable::createFromFormat("Y-m-d",$createdAt_search);

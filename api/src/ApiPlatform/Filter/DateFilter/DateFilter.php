@@ -1,20 +1,18 @@
 <?php
-namespace App\ApiPlatform;
+namespace App\ApiPlatform\Filter\DateFilter;
 
 use ApiPlatform\Core\Serializer\Filter\FilterInterface;
+use App\ApiPlatform\Filter\Utils\ApplyFilter;
 use Symfony\Component\HttpFoundation\Request;
 
 class DateFilter implements FilterInterface
 {
 
 
-   public const SEARCH_NAME_FILTER_CONTEXT = 'date';
-
-   public function __construct(private bool $throwOnValid =false){
-
-
-   }
-   public function getDescription(string $resourceClass): array
+   public const SEARCH_DATE_FILTER_CONTEXT = 'date';
+    public function __construct(private ApplyFilter $applyFilter,private array $properties=[]){
+    }
+    public function getDescription(string $resourceClass): array
     {
         return  [
             'name'=>[
@@ -30,10 +28,6 @@ class DateFilter implements FilterInterface
 
     public function apply(Request $request, bool $normalization, array $attributes, array &$context)
     {
-        $date = $request->query->get('date');
-        if(!$date  && $this->throwOnValid){
-            return;
-        }
-        $context[self::SEARCH_NAME_FILTER_CONTEXT]= $date;
+        $this->applyFilter->setContext(self::SEARCH_DATE_FILTER_CONTEXT,$context,$this->properties,$request);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Entity\Music;
 
 use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Annotation\ApiResource;
-use App\ApiPlatform\SearchStringFilter;
+use App\ApiPlatform\Filter\StringFilter\SearchStringFilter;
 use App\Repository\Music\TrackRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;

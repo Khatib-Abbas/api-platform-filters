@@ -1,7 +1,8 @@
 <?php
-namespace App\ApiPlatform;
+namespace App\ApiPlatform\Filter\StringFilter;
 
 use ApiPlatform\Core\Serializer\Filter\FilterInterface;
+use App\ApiPlatform\Filter\Utils\ApplyFilter;
 use Symfony\Component\HttpFoundation\Request;
 
 class SearchStringFilter implements FilterInterface
@@ -10,10 +11,9 @@ class SearchStringFilter implements FilterInterface
 
    public const SEARCH_STRING_FILTER_CONTEXT = 'search_string';
 
-   public function __construct(private array $properties=[]){
-
-
+   public function __construct(private ApplyFilter $applyFilter,private array $properties=[]){
    }
+
    public function getDescription(string $resourceClass): array
     {
         $descriptions =[];
@@ -32,14 +32,6 @@ class SearchStringFilter implements FilterInterface
 
     public function apply(Request $request, bool $normalization, array $attributes, array &$context)
     {
-        $querySearch =[];
-        foreach ($this->properties as $id =>$property) {
-            $search = $request->query->get($id);
-            $querySearch[] = ["param" => ["attribute"=>$id ,"value"=>$search], "queryParam" => $property];
-        }
-        if(!$querySearch ){
-            return;
-        }
-        $context[self::SEARCH_STRING_FILTER_CONTEXT]= $querySearch;
+        $this->applyFilter->setContext(self::SEARCH_STRING_FILTER_CONTEXT,$context,$this->properties,$request);
     }
 }

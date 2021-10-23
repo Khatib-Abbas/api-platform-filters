@@ -1,0 +1,6 @@
+App\Entity\Music\Track:
+    track_{1..10000}:
+        name: <name()>
+        createdAt: <dateTime()>
+        duration: <numberBetween(0, 100)>
+        label: <name()>

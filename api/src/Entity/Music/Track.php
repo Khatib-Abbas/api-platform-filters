@@ -4,15 +4,19 @@ namespace App\Entity\Music;
 
 use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\DateFilterInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use App\ApiPlatform\Filter\StringFilter\SearchStringFilter;
 use App\Repository\Music\TrackRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\DateFilter;
 
 #[ApiResource]
 #[ORM\Entity(repositoryClass: TrackRepository::class)]
-##[ApiFilter(TrackSearchFilter::class, arguments: ["throwOnValid"=>true])]
-#[ApiFilter(SearchStringFilter::class, properties: ['name' => 'exact','label'=>'partial'])]
+##[ApiFilter(SearchStringFilter::class, properties: ['name' => 'exact','label'=>'partial'])]
+#[ApiFilter(DateFilter::class, properties: ['createdAt'=> DateFilterInterface::EXCLUDE_NULL])]
+#[ApiFilter(SearchFilter::class, properties: ['name' => 'exact'])]
 
 class Track
 {
